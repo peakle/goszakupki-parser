@@ -9,7 +9,7 @@
             "program": "${workspaceFolder}/cmd/main.go",
             "env": {},
             "args": [
-                "googleplaynewbee"
+                "44-fz"
             ]
         }
     ]
