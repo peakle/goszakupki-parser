@@ -10,7 +10,7 @@ db:
     name: "Loat"
 
 image:
-    registry: 
+    registry:  # TODO docker hub image registry
     name: 
     tag: latest
 

@@ -6,8 +6,8 @@ func LoadProxy(queue chan<- string, done <-chan struct{}) {
 		select {
 		case <-done:
 			return
-		default:
-			queue <- "" // TODO add proxy
+		case queue <- "":
+			// TODO add proxy
 		}
 	}
 }

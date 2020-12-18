@@ -34,7 +34,7 @@ var (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "loats"
+	app.Name = "loat"
 	app.Commands = commands
 	app.Version = fmt.Sprintf("%s - %s", Version, CommitID)
 

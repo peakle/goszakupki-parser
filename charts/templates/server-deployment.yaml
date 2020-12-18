@@ -9,7 +9,6 @@ spec:
   replicas: 1
   revisionHistoryLimit: 0
   minReadySeconds: 10
-  strategy: {}
   selector:
     matchLabels:
       app: "{{ .Values.service.name }}-app"

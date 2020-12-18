@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -49,7 +48,8 @@ func StartServer(_ *cli.Context) {
 func handle(ctx *fasthttp.RequestCtx) {
 	var err error
 	var entryDto provider.EntryDto
-	var result provider.Result
+	var result []provider.ResponseLoat
+	var ans []byte
 
 	ctx.Response.Header.Set("Content-Type", "application/json")
 
@@ -66,13 +66,12 @@ func handle(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	ans := bytes.NewBuffer()
 	ans, err = json.Marshal(result)
 	if err != nil {
-		fmt.Fprintf(ctx, "{\"error\": \""+err.Error()+"\"}")
+		fmt.Fprint(ctx, "{\"error\": \""+err.Error()+"\"}")
 
 		return
 	}
 
-	fmt.Fprint(ctx, ans.String())
+	fmt.Fprint(ctx, string(ans))
 }

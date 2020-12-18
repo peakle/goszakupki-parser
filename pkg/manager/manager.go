@@ -18,35 +18,41 @@ type config struct {
 	DBName   string
 }
 
+// SQLManager - manage connect to db
 type SQLManager struct {
 	conn *sql.DB
 }
 
-func InitCustomManager(host, username, password, DBname string) *SQLManager {
+// UpsertLoats - upsert new loats
+func (m *SQLManager) UpsertLoats(loats []provider.Loat) {
+	//TODO
+}
+
+// GetLoats - get loats by filters
+func (m *SQLManager) GetLoats(entry provider.EntryDto) ([]provider.ResponseLoat, error) {
+	//TODO
+
+	return nil, nil
+}
+
+// InitManager - init connect to db
+func InitManager() *SQLManager {
 	m := &SQLManager{}
 
 	m.open(&config{
-		Host:     host,
-		Username: username,
-		Pass:     password,
+		Host:     os.Getenv("MYSQL_HOST"),
+		Username: os.Getenv("MYSQL_USER"),
+		Pass:     os.Getenv("MYSQL_PASSWORD"),
 		Port:     "3306",
-		DBName:   DBname,
+		DBName:   os.Getenv("MYSQL_DATABASE"),
 	})
 
 	return m
 }
 
+// Close - close connect to db
 func (m *SQLManager) Close() {
-	_ = m.conn.Close()
-}
-
-func (m *SQLManager) UpsertLoats(loats []provider.Loat)
-{
-	//TODO
-}
-func (m *SQLManager) GetLoats(entry provider.EntryDto) ([]ResponseLoat, error)
-{
-//TODO
+	m.conn.Close()
 }
 
 func (m *SQLManager) insert(dataInsert *sg.InsertData) int {

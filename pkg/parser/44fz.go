@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -17,9 +16,12 @@ func ProcessLoat44(_ *cli.Context) error {
 	fmt.Println("Start time: ", time.Now().Format("2006-01-02 15:04"))
 
 	var proxyChan = make(chan string, 3000)
-	var doneChan = make(chan struct{})
+	var doneChan = make(chan struct{}, 2)
 	defer func() {
-		doneChan <- struct{}{}
+		doneChan <- struct{}{} // for proxy
+		doneChan <- struct{}{} // for upserts
+
+		close(doneChan)
 		close(proxyChan)
 	}()
 
@@ -29,7 +31,7 @@ func ProcessLoat44(_ *cli.Context) error {
 	upsertWg := &sync.WaitGroup{}
 
 	upsertWg.Add(1)
-	go upsertLoat(loatChan, upsertWg)
+	go upsertLoat(loatChan, doneChan, upsertWg)
 
 	//TODO implement logic
 
@@ -39,8 +41,9 @@ func ProcessLoat44(_ *cli.Context) error {
 	return nil
 }
 
-func upsertLoat(loatCh <-chan provider.Loat, wg *sync.WaitGroup) {
+func upsertLoat(loatCh <-chan provider.Loat, doneCh <-chan struct{}, wg *sync.WaitGroup) {
 	const maxUpsertLen = 10000
+
 	defer wg.Done()
 
 	var loat provider.Loat
@@ -48,12 +51,7 @@ func upsertLoat(loatCh <-chan provider.Loat, wg *sync.WaitGroup) {
 	ticker := time.NewTicker(time.Minute * 1)
 	defer ticker.Stop()
 
-	m := manager.InitCustomManager(
-		os.Getenv("MYSQL_HOST"),
-		os.Getenv("MYSQL_USER"),
-		os.Getenv("MYSQL_PASSWORD"),
-		os.Getenv("MYSQL_DATABASE"),
-	)
+	m := manager.InitManager()
 	defer m.Close()
 
 	loats := make([]provider.Loat, 0, 10000)
@@ -66,7 +64,7 @@ func upsertLoat(loatCh <-chan provider.Loat, wg *sync.WaitGroup) {
 
 				loats = loats[:0]
 			}
-		default:
+		case loat = <-loatCh:
 			if len(loats) >= maxUpsertLen {
 				m.UpsertLoats(loats)
 
@@ -74,6 +72,8 @@ func upsertLoat(loatCh <-chan provider.Loat, wg *sync.WaitGroup) {
 			}
 
 			loats = append(loats, loat)
+		case <-doneCh:
+			return
 		}
 	}
 }
