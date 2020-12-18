@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.service.name }}-app"
+  labels:
+    app: "{{ .Values.service.name }}-app"
+    release: "{{ .Release.Name }}"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  minReadySeconds: 10
+  strategy: {}
+  selector:
+    matchLabels:
+      app: "{{ .Values.service.name }}-app"
+      release: "{{ .Release.Name }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Values.service.name }}-app"
+        release: "{{ .Release.Name }}"
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: "{{ .Chart.Name }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: Always
+          env:
+            - name: MYSQL_DATABASE
+              value: "{{ .Values.db.name }}"
+            - name: MYSQL_HOST
+              value: "{{ .Values.db.host }}"
+          command:
+            - /app/loat
+            - server
+          ports:
+            - containerPort: "{{ .Values.service.externalPort }}"
+      restartPolicy: Always

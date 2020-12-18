@@ -1,0 +1,31 @@
+replicaCount: 1
+revisionHistoryLimit: 0
+minReadySeconds: 10
+maxUnavailable: 50%
+maxSurge: 1
+gracePeriod: 30
+
+db:
+    host: "localhost"
+    name: "Loat"
+
+image:
+    registry: 
+    name: 
+    tag: latest
+
+service:
+    name: loat
+    host: 127.0.0.1
+    namespace: default
+    type: ClusterIP
+    externalPort: "80"
+    internalPort: "80"
+
+resources:
+    limits:
+        cpu: 30m
+        memory: 48Mi
+    requests:
+        cpu: 30m
+        memory: 48Mi

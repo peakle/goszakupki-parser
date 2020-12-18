@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "{{ .Values.service.name }}-ingress"
+  namespace: "{{ .Values.service.namespace }}"
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+
+spec:
+  rules:
+    - host: "{{ .Values.service.host }}"
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ .Values.service.name }}-service
+              servicePort: {{ .Values.service.externalPort }}

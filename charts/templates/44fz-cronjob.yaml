@@ -1,0 +1,27 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: loat-44-fz
+spec:
+  schedule: "20 4 * * *"
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+            - name: regcred
+          containers:
+            - name: "{{ .Values.service.name}}-44-fz"
+              image: "{{ .Values.image.registry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+              imagePullPolicy: Always
+              env:
+                - name: MYSQL_DATABASE
+                  value: "{{ .Values.db.name }}"
+                - name: MYSQL_HOST
+                  value: "{{ .Values.db.host }}"
+              args:
+                - /app/loat
+                - 44-fz
+          restartPolicy: Never

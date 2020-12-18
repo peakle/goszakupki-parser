@@ -1,0 +1,8 @@
+apiVersion: v2
+type: application
+version: 1.0
+
+maintainers:
+    -   name: Denis Limarev
+        email: denislimarev@gmail.com
+engine: gotpl

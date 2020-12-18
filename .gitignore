@@ -1,0 +1,6 @@
+.env
+.idea
+docker/mysql/.data
+log/*
+!log/.gitkeep
+docker/.data
