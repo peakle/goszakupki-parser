@@ -27,7 +27,7 @@ func ProcessLoat44(_ *cli.Context) error {
 
 	go proxy.LoadProxy(proxyChan, doneChan)
 
-	loatChan := make(chan provider.Loat, 1000)
+	loatChan := make(chan provider.Lot, 1000)
 	upsertWg := &sync.WaitGroup{}
 
 	upsertWg.Add(1)
@@ -41,12 +41,12 @@ func ProcessLoat44(_ *cli.Context) error {
 	return nil
 }
 
-func upsertLoat(loatCh <-chan provider.Loat, doneCh <-chan struct{}, wg *sync.WaitGroup) {
+func upsertLoat(loatCh <-chan provider.Lot, doneCh <-chan struct{}, wg *sync.WaitGroup) {
 	const maxUpsertLen = 10000
 
 	defer wg.Done()
 
-	var loat provider.Loat
+	var loat provider.Lot
 
 	ticker := time.NewTicker(time.Minute * 1)
 	defer ticker.Stop()
@@ -54,7 +54,7 @@ func upsertLoat(loatCh <-chan provider.Loat, doneCh <-chan struct{}, wg *sync.Wa
 	m := manager.InitManager()
 	defer m.Close()
 
-	loats := make([]provider.Loat, 0, 10000)
+	loats := make([]provider.Lot, 0, 10000)
 
 	for {
 		select {

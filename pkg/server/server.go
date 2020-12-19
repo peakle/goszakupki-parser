@@ -48,7 +48,7 @@ func StartServer(_ *cli.Context) {
 func handle(ctx *fasthttp.RequestCtx) {
 	var err error
 	var entryDto provider.EntryDto
-	var result []provider.ResponseLoat
+	var result []provider.ResponseLot
 	var ans []byte
 
 	ctx.Response.Header.Set("Content-Type", "application/json")
