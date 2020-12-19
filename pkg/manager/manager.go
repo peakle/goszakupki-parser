@@ -23,9 +23,64 @@ type SQLManager struct {
 	conn *sql.DB
 }
 
-// UpsertLots - upsert new lots
-func (m *SQLManager) UpsertLots(lots []provider.Lot) {
-	//TODO
+// UpsertPurchase - upsert new lots/trends/purchase
+func (m *SQLManager) UpsertPurchase(lots []*provider.Purchase) {
+	const TableName = "Purchase"
+
+	dataUpsert := &sg.UpsertData{
+		TableName: TableName,
+		Fields: []string{
+			"id",
+			"fz",
+			"customer",
+			"customer_link",
+			"customer_inn",
+			"customer_region",
+			"bidding_region",
+			"customer_activity_field",
+			"bidding_volume",
+			"bidding_count",
+			"purchase_target",
+			"registry_bidding_number",
+			"contract_price",
+			"participation_security_amount",
+			"execution_security_amount",
+			"published_at",
+			"requisition_deadline_at",
+			"contract_start_at",
+			"contract_end_at",
+			"playground",
+			"purchase_link",
+		},
+	}
+
+	for _, lot := range lots {
+		dataUpsert.Add([]string{
+			lot.Id,
+			lot.Fz,
+			lot.Customer,
+			lot.CustomerLink,
+			lot.CustomerInn,
+			lot.CustomerRegion,
+			lot.BiddingRegion,
+			lot.CustomerActivityField,
+			lot.BiddingVolume,
+			lot.BiddingCount,
+			lot.PurchaseTarget,
+			lot.RegistryBiddingNumber,
+			lot.ContractPrice,
+			lot.ParticipationSecurityAmount,
+			lot.ExecutionSecurityAmount,
+			lot.PublishedAt,
+			lot.RequisitionDeadlineAt,
+			lot.ContractStartAt,
+			lot.ContractEndAt,
+			lot.Playground,
+			lot.PurchaseLink,
+		})
+	}
+
+	m.upsert(dataUpsert)
 }
 
 // GetLots - get lots by filters

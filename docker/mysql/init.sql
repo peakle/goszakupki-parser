@@ -30,11 +30,12 @@ create table Provider -- Поставщики
 	phone_number varchar(255) null
 );
 
-create table Purchases -- "База по закупкам"
+create table Purchase -- "База по закупкам"
 (
 	id bigint unsigned not null primary key,
 	fz varchar(255) not null,
 	customer varchar(255) null,
+	customer_link varchar(255) null,
 	customer_inn varchar(255) null,
 	customer_region varchar(255) null,
 	bidding_region varchar(255) null,
@@ -51,7 +52,7 @@ create table Purchases -- "База по закупкам"
 	contract_start_at datetime null,
 	contract_end_at datetime null,
 	playground varchar(255) null,
-	doc_link varchar(255) null
+	purchase_link varchar(255) null
 );
 
 create table PurchaseRequisition -- "Поданные заявки"

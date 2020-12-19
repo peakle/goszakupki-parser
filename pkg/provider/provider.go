@@ -5,13 +5,68 @@ import "time"
 // DefaultTimeout - for main purposes
 const DefaultTimeout = 4 * time.Second
 
+// UserAgent - user agent for http client
+const UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:84.0) Gecko/20100101 Firefox/84.0"
+
+// URIPatternFZ44Purchase - pattern for parse purchases
+const URIPatternFZ44Purchase = "https://zakupki.gov.ru/epz/order/notice/ea44/view/common-info.html?regNumber=%d&formatInJson=true"
+
 type EntryDto struct { //TODO add filters for api
 }
 
-//TODO struct of db columns
-type Lot struct {
+// Purchase - represent table columns
+type Purchase struct {
+	Id                          string
+	Fz                          string
+	Customer                    string
+	CustomerLink                string
+	CustomerInn                 string
+	CustomerRegion              string
+	BiddingRegion               string
+	CustomerActivityField       string
+	BiddingVolume               string
+	BiddingCount                string
+	PurchaseTarget              string
+	RegistryBiddingNumber       string
+	ContractPrice               string
+	ParticipationSecurityAmount string
+	ExecutionSecurityAmount     string
+	PublishedAt                 string
+	RequisitionDeadlineAt       string
+	ContractStartAt             string
+	ContractEndAt               string
+	Playground                  string
+	PurchaseLink                string
 }
 
+// Provider - represent table columns
+type Provider struct {
+	Id               string
+	Fz               string
+	PublishedAt      string
+	Nmck             string
+	SecurityAmount   string
+	Winner           string
+	ProviderRegion   string
+	Address          string
+	LeaderFio        string
+	INN              string
+	Email            string
+	Email2           string
+	WinCount         string
+	ParticipateCount string
+	LastWinDate      string
+	Purpose          string
+	ProcedureType    string
+	Playground       string
+	Customer         string
+	WinCountYear     string
+	Bad              string
+	ActivityField    string
+	PhoneNumber      string
+}
+
+// Dto44fz - represent json response from purchase by 44fz
 type Dto44fz struct {
 	Dto struct {
 		HeaderBlock struct {
