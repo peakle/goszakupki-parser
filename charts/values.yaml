@@ -17,6 +17,8 @@ image:
 service:
     name: lot
     host: 127.0.0.1
+    user: root
+    password: root
     namespace: default
     type: ClusterIP
     externalPort: "80"

@@ -21,6 +21,10 @@ spec:
                   value: "{{ .Values.db.name }}"
                 - name: MYSQL_HOST
                   value: "{{ .Values.db.host }}"
+                - name: MYSQL_USER
+                  value: "{{ .Values.db.user }}"
+                - name: MYSQL_PASSWORD
+                  value: "{{ .Values.db.password }}"
               args:
                 - /app/lot
                 - 44-fz

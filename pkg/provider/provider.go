@@ -9,7 +9,7 @@ const DefaultTimeout = 4 * time.Second
 const UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:84.0) Gecko/20100101 Firefox/84.0"
 
 // URIPatternFZ44Purchase - pattern for parse purchases
-const URIPatternFZ44Purchase = "https://zakupki.gov.ru/epz/order/notice/ea44/view/common-info.html?regNumber=%d&formatInJson=true"
+const URIPatternFZ44Purchase = "https://zakupki.gov.ru/epz/order/notice/ea44/view/common-info.html?regNumber=%s&formatInJson=true"
 
 type EntryDto struct { //TODO add filters for api
 }
@@ -211,7 +211,7 @@ type Dto44fz struct {
 			EnsuringPerformanceContract struct {
 				AdditionalInformation       interface{} `json:"additionalInformation"`
 				AmountContractEnforcement   interface{} `json:"amountContractEnforcement"`
-				ContractGrntShare           int         `json:"contractGrntShare"`
+				ContractGrntShare           float64     `json:"contractGrntShare"`
 				ContractualSecurityRequired string      `json:"contractualSecurityRequired"`
 				Currency                    string      `json:"currency"`
 				EnforcementProcedure        string      `json:"enforcementProcedure"`
@@ -307,10 +307,10 @@ type Dto44fz struct {
 					KosguTotalAmountByYearMapsFormated interface{} `json:"kosguTotalAmountByYearMapsFormated"`
 					KvrCodeList                        []struct {
 						AmountByYearMaps struct {
-							Num2020 []int     `json:"2020"`
+							Num2020 []float64 `json:"2020"`
 							Num2021 []float64 `json:"2021"`
-							Num2022 []int     `json:"2022"`
-							Num2023 []int     `json:"2023"`
+							Num2022 []float64 `json:"2022"`
+							Num2023 []float64 `json:"2023"`
 						} `json:"amountByYearMaps"`
 						AmountByYearMapsFormated struct {
 							Num2020 []string `json:"2020"`
@@ -338,9 +338,9 @@ type Dto44fz struct {
 					} `json:"kvrTotalAmountByYearMaps"`
 					KvrTotalAmountByYearMapsFormated struct {
 					} `json:"kvrTotalAmountByYearMapsFormated"`
-					Total                     int   `json:"total"`
-					Years                     []int `json:"years"`
-					HasAnnualPaymentPlanTable bool  `json:"hasAnnualPaymentPlanTable"`
+					Total                     float64 `json:"total"`
+					Years                     []int   `json:"years"`
+					HasAnnualPaymentPlanTable bool    `json:"hasAnnualPaymentPlanTable"`
 				} `json:"contractPaymentPlan"`
 				ContractPriceFormula                interface{} `json:"contractPriceFormula"`
 				Currency                            string      `json:"currency"`
@@ -552,7 +552,7 @@ type Dto44fz struct {
 					Name string `json:"name"`
 				} `json:"additionalCharacteristicsTRU"`
 				Cost                   interface{} `json:"cost"`
-				Count                  int         `json:"count"`
+				Count                  float64     `json:"count"`
 				CustomerCountTru       interface{} `json:"customerCountTru"`
 				JustificationInclusion interface{} `json:"justificationInclusion"`
 				PositionCode           struct {

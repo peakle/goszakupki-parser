@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 	"sync"
 	"time"
 
@@ -32,12 +31,12 @@ func ProcessLot44(c *cli.Context) error {
 		toDate = time.Now().AddDate(0, 0, 1).Format("02-01-2006")
 	}
 
-	var regNumber int
+	var regNumber string
 	var proxyChan = make(chan string, 3000)
 	var doneChan = make(chan struct{}, 2)
 	var lotChan = make(chan *provider.Purchase, 1000)
-	var concurCh = make(chan struct{}, 10) // increase for more parallelism
-	var regNumberCh = make(chan int, 10000)
+	var concurCh = make(chan struct{}, 1) // increase for more parallelism
+	var regNumberCh = make(chan string, 10000)
 
 	var workerWg = &sync.WaitGroup{}
 	var upsertWg = &sync.WaitGroup{}
@@ -67,16 +66,15 @@ func ProcessLot44(c *cli.Context) error {
 	return nil
 }
 
-func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- int, proxyCh <-chan string) {
+func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, proxyCh <-chan string) {
 	//pageNumber, from, to, price (from)
 	const SearchURIPattern = "https://zakupki.gov.ru/epz/order/extendedsearch/results.html?morphology=on&sortDirection=true&recordsPerPage=_50&showLotsInfoHidden=false&sortBy=PRICE&fz44=on&af=on&ca=on&currencyIdGeneral=-1&formatInJson=true&pageNumber=%d&publishDateFrom=%s&publishDateTo=%s&priceFromGeneral=%d"
 	const maxRecordsPerPage = 50
 	const maxPageCount = 20
 
-	var price, regNumber int
+	var price int
 	var err error
-	var uri string
-	var proxy string
+	var uri, proxy string
 	var searchDto provider.ExtentendedSearch
 	var l provider.List
 
@@ -118,10 +116,12 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- int, pro
 		if err != nil {
 			log.Printf("on fz44regNumberGenerator: on Unmarshal: %s, uri: %s \n", err.Error(), uri)
 
-			fasthttp.ReleaseRequest(req)
-			fasthttp.ReleaseResponse(resp)
+			if searchDto.List == nil {
+				fasthttp.ReleaseRequest(req)
+				fasthttp.ReleaseResponse(resp)
 
-			continue
+				continue
+			}
 		}
 
 		if searchDto.Total == 0 {
@@ -132,10 +132,8 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- int, pro
 		}
 
 		for _, l = range searchDto.List {
-			regNumber, _ = strconv.Atoi(l.Number)
-
-			if regNumber != 0 {
-				regNumberCh <- regNumber
+			if l.Number != "" {
+				regNumberCh <- l.Number
 			}
 		}
 
@@ -160,7 +158,7 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- int, pro
 	}
 }
 
-func fz44LotWorker(regNumber int, lotCh chan<- *provider.Purchase, proxy string, concurCh chan struct{}, wg *sync.WaitGroup) {
+func fz44LotWorker(regNumber string, lotCh chan<- *provider.Purchase, proxy string, concurCh chan struct{}, wg *sync.WaitGroup) {
 	concurCh <- struct{}{}
 	defer func() {
 		<-concurCh
@@ -203,7 +201,10 @@ func fz44LotWorker(regNumber int, lotCh chan<- *provider.Purchase, proxy string,
 	err = json.Unmarshal(resp.Body(), &dto)
 	if err != nil {
 		log.Println("on lot44Logic: on unmarshal: " + err.Error())
-		return
+
+		if dto.Dto.HeaderBlock.PurchaseNumber == "" {
+			return
+		}
 	}
 
 	{
@@ -216,11 +217,11 @@ func fz44LotWorker(regNumber int, lotCh chan<- *provider.Purchase, proxy string,
 			CustomerRegion: dto.Dto.OrganizationDefinitionSupplierBlock.Location,
 			// BiddingRegion: ,
 			// CustomerActivityField: dto.Dto.HeaderBlock.PurchaseObjectName,
-			BiddingVolume: fmt.Sprintf("%.6f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
+			BiddingVolume: fmt.Sprintf("%.3f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
 			// BiddingCount: ,
 			PurchaseTarget:        dto.Dto.HeaderBlock.PurchaseObjectName,
 			RegistryBiddingNumber: dto.Dto.HeaderBlock.PurchaseNumber,
-			ContractPrice:         fmt.Sprintf("%.6f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
+			ContractPrice:         fmt.Sprintf("%.3f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
 			PublishedAt:           time.Unix(dto.Dto.ProcedurePurchaseBlock.StartDateTime, 0).Format("02-01-2006"), // maybe error need treem 3 digits from rigth end
 			RequisitionDeadlineAt: time.Unix(dto.Dto.ProcedurePurchaseBlock.EndDateTime, 0).Format("02-01-2006"),   // maybe error need treem 3 digits from rigth end
 			ContractStartAt:       "",                                                                              //TODO
@@ -232,12 +233,12 @@ func fz44LotWorker(regNumber int, lotCh chan<- *provider.Purchase, proxy string,
 		if len(dto.Dto.CustomerRequirementsBlock) > 0 {
 			var participationSecurityAmount string
 			if dto.Dto.CustomerRequirementsBlock[0].EnsuringPurchase.OfferGrnt {
-				participationSecurityAmount = fmt.Sprintf("%d", dto.Dto.CustomerRequirementsBlock[0].EnsuringPurchase.AmountEnforcement)
+				participationSecurityAmount = fmt.Sprintf("%.3f", dto.Dto.CustomerRequirementsBlock[0].EnsuringPurchase.AmountEnforcement)
 			}
 			purchase.ParticipationSecurityAmount = participationSecurityAmount
 
 			if dto.Dto.CustomerRequirementsBlock[0].EnsuringPerformanceContract.OfferGrnt {
-				purchase.ExecutionSecurityAmount = fmt.Sprintf("%d", dto.Dto.CustomerRequirementsBlock[0].EnsuringPerformanceContract.ContractGrntShare)
+				purchase.ExecutionSecurityAmount = fmt.Sprintf("%.3f", dto.Dto.CustomerRequirementsBlock[0].EnsuringPerformanceContract.ContractGrntShare)
 			}
 		}
 

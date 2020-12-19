@@ -1,8 +1,6 @@
 CREATE DATABASE IF NOT EXISTS Lots;
 USE Lots;
 
--- TODO create tables
-
 create table Provider -- Поставщики
 (
 	id bigint unsigned not null primary key,

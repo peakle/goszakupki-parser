@@ -1,4 +1,3 @@
-# TODO for local tests
 version: "3.7"
 
 volumes:
