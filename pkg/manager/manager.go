@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/peakle/goszakupki-parser/pkg/provider"
@@ -155,6 +156,10 @@ func (m *SQLManager) GetLots(entry provider.EntryDto) ([]provider.Purchase, erro
 			&row.Playground,
 			&row.PurchaseLink,
 		)
+
+		if strings.HasPrefix(row.PurchaseLink, "https://") == false {
+			row.PurchaseLink = fmt.Sprintf("https://zakupki.gov.ru/epz/order/notice%s", row.PurchaseLink)
+		}
 
 		if err != nil {
 			log.Println("on GetLots: on scan: " + err.Error())
