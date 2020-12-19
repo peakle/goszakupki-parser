@@ -1,9 +1,11 @@
 package parser
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -16,45 +18,161 @@ import (
 )
 
 // ProcessLot44 collect data about new lots for 44-FZ
-func ProcessLot44(_ *cli.Context) error {
+func ProcessLot44(c *cli.Context) error {
 	fmt.Println("Start time: ", time.Now().Format("2006-01-02 15:04"))
 
+	fromDate := c.String("from-date") // may be add iterate through dates slice
+	toDate := c.String("to-date")
+
+	if fromDate == "" {
+		fromDate = time.Now().Format("02-01-2006")
+	}
+
+	if toDate == "" {
+		toDate = time.Now().AddDate(0, 0, 1).Format("02-01-2006")
+	}
+
+	var regNumber int
 	var proxyChan = make(chan string, 3000)
 	var doneChan = make(chan struct{}, 2)
-	defer func() {
-		doneChan <- struct{}{} // for proxy
-		doneChan <- struct{}{} // for upserts
+	var lotChan = make(chan *provider.Purchase, 1000)
+	var concurCh = make(chan struct{}, 10) // increase for more parallelism
+	var regNumberCh = make(chan int, 1000)
 
+	var workerWg = &sync.WaitGroup{}
+	var upsertWg = &sync.WaitGroup{}
+
+	upsertWg.Add(1)
+
+	defer func() {
 		close(doneChan)
 		close(proxyChan)
 	}()
 
 	go proxy.LoadProxy(proxyChan, doneChan)
-
-	lotChan := make(chan *provider.Purchase, 1000)
-	upsertWg := &sync.WaitGroup{}
-
-	upsertWg.Add(1)
 	go upsertLot(lotChan, doneChan, upsertWg)
+	go fz44RegNumberGenerator(fromDate, toDate, regNumberCh, proxyChan)
 
-	concurCh := make(chan struct{}, 10) // increase for more parallelism
-	lot44Worker(0, lotChan, <-proxyChan, concurCh)
+	for regNumber = range regNumberCh {
+		workerWg.Add(1)
+		go fz44LotWorker(regNumber, lotChan, <-proxyChan, concurCh, workerWg)
+	}
 
+	doneChan <- struct{}{} // for upserts
+	doneChan <- struct{}{} // for proxy
 	upsertWg.Wait()
+
 	fmt.Println("End time: ", time.Now().Format("2006-01-02 15:04"))
 
 	return nil
 }
 
-func lot44Worker(regNumber int, lotCh chan<- *provider.Purchase, proxy string, concurCh chan struct{}) {
+func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- int, proxyCh <-chan string) {
+	//pageNumber, from, to, price (from)
+	const SearchURIPattern = "https://zakupki.gov.ru/epz/order/extendedsearch/results.html?morphology=on&sortDirection=true&recordsPerPage=_50&showLotsInfoHidden=false&sortBy=PRICE&fz44=on&af=on&ca=on&currencyIdGeneral=-1&formatInJson=true&pageNumber=%d&publishDateFrom=%s&publishDateTo=%s&priceFromGeneral=%d"
+	const maxRecordsPerPage = 50
+	const maxPageCount = 20
+
+	var price, regNumber int
+	var err error
+	var uri string
+	var proxy string
+	var searchDto provider.ExtentendedSearch
+	var l provider.List
+
+	var req *fasthttp.Request
+	var resp *fasthttp.Response
+
+	var pageNumber = 1
+	var client = fasthttp.Client{
+		TLSConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	for {
+		req = fasthttp.AcquireRequest()
+		resp = fasthttp.AcquireResponse()
+
+		if proxy != "" {
+			client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxy, 30*time.Second)
+		} else {
+			client.Dial = nil
+		}
+
+		uri = fmt.Sprintf(SearchURIPattern, pageNumber, fromDate, toDate, price)
+
+		req.SetRequestURI(uri)
+		req.Header.SetUserAgent(provider.UserAgent)
+		req.SetConnectionClose()
+
+		err = client.DoTimeout(req, resp, provider.DefaultTimeout)
+		if err != nil {
+			log.Println("on fz44regNumberGenerator: on DoTimeout:" + err.Error())
+
+			fasthttp.ReleaseRequest(req)
+			fasthttp.ReleaseResponse(resp)
+
+			continue
+		}
+
+		err = json.Unmarshal(resp.Body(), &searchDto)
+		if err != nil {
+			log.Println("on fz44regNumberGenerator: on Unmarshal:" + err.Error())
+
+			fasthttp.ReleaseRequest(req)
+			fasthttp.ReleaseResponse(resp)
+
+			continue
+		}
+
+		if searchDto.Total == 0 {
+			fasthttp.ReleaseRequest(req)
+			fasthttp.ReleaseResponse(resp)
+
+			break
+		}
+
+		for _, l = range searchDto.List {
+			regNumber, _ = strconv.Atoi(l.Number)
+
+			if regNumber != 0 {
+				regNumberCh <- regNumber
+			}
+		}
+
+		if searchDto.Total < maxRecordsPerPage {
+			fasthttp.ReleaseRequest(req)
+			fasthttp.ReleaseResponse(resp)
+
+			break
+		}
+
+		if pageNumber == maxPageCount {
+			price = l.Price
+			pageNumber = 1
+
+			fasthttp.ReleaseRequest(req)
+			fasthttp.ReleaseResponse(resp)
+
+			continue
+		}
+
+		pageNumber++
+	}
+}
+
+func fz44LotWorker(regNumber int, lotCh chan<- *provider.Purchase, proxy string, concurCh chan struct{}, wg *sync.WaitGroup) {
 	concurCh <- struct{}{}
 	defer func() {
 		<-concurCh
+		wg.Done()
 	}()
 
 	var err error
+	var dto provider.Dto44fz
 
-	client := fasthttp.Client{}
+	client := fasthttp.Client{
+		TLSConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	if proxy != "" {
 		client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxy, provider.DefaultTimeout)
 	}
@@ -75,13 +193,9 @@ func lot44Worker(regNumber int, lotCh chan<- *provider.Purchase, proxy string, c
 		return
 	}
 
-	var dto *provider.Dto44fz
-	err = json.Unmarshal(resp.Body(), dto)
-	if dto == nil {
-		if err != nil {
-			log.Println("on lot44Logic: on unmarshal: " + err.Error())
-		}
-
+	err = json.Unmarshal(resp.Body(), &dto)
+	if err != nil {
+		log.Println("on lot44Logic: on unmarshal: " + err.Error())
 		return
 	}
 
@@ -125,9 +239,9 @@ func lot44Worker(regNumber int, lotCh chan<- *provider.Purchase, proxy string, c
 }
 
 func upsertLot(lotCh <-chan *provider.Purchase, doneCh <-chan struct{}, wg *sync.WaitGroup) {
-	const maxUpsertLen = 3000
-
 	defer wg.Done()
+
+	const maxUpsertLen = 3000
 
 	var lot *provider.Purchase
 

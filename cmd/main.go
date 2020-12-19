@@ -21,6 +21,7 @@ var (
 			Description: "parse lots for 44-fz",
 			Action:      parser.ProcessLot44,
 			Category:    "parser",
+			ArgsUsage:   "from-date, to-date parse period for search lots",
 		},
 		{
 			Name:        "lots-server",

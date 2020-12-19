@@ -594,3 +594,128 @@ type Dto44fz struct {
 		TenderDocumentationBlockDto interface{} `json:"tenderDocumentationBlockDto"`
 	} `json:"dto"`
 }
+
+// ExtentendedSearch - represents search response
+type ExtentendedSearch struct {
+	Total     int `json:"total"`
+	PagingDto struct {
+		CriteriaPageNumber int    `json:"criteriaPageNumber"`
+		PageCount          int    `json:"pageCount"`
+		RecordsPerPage     string `json:"recordsPerPage"`
+		Rounded            bool   `json:"rounded"`
+		Total              int    `json:"total"`
+		TotalRounded       int    `json:"totalRounded"`
+		MoreThanTen        bool   `json:"moreThanTen"`
+		RssLink            string `json:"rssLink"`
+		ExceedCount        bool   `json:"exceedCount"`
+	} `json:"pagingDto"`
+	List                       []List `json:"list"`
+	CriteriaURL                string `json:"criteria_url"`
+	SessionMaxInactiveInterval int    `json:"sessionMaxInactiveInterval"`
+}
+
+// List - represents elements in search response
+type List struct {
+	StageNumber                    int         `json:"stageNumber"`
+	Comments                       interface{} `json:"comments"`
+	ControlID                      int         `json:"controlId"`
+	CreateDate                     int64       `json:"createDate"`
+	CreateDateAsTimestamp          int64       `json:"createDateAsTimestamp"`
+	CreateDateMob                  int64       `json:"createDateMob"`
+	Currency                       string      `json:"currency"`
+	CurrencyCbRate                 interface{} `json:"currencyCbRate"`
+	CurrencyContractCurrency       interface{} `json:"currencyContractCurrency"`
+	CurrencyContractCurrencySymbol interface{} `json:"currencyContractCurrencySymbol"`
+	CurrencyRate                   interface{} `json:"currencyRate"`
+	CurrencyRateDate               interface{} `json:"currencyRateDate"`
+	CurrencySymbol                 string      `json:"currencySymbol"`
+	CustomerID                     string      `json:"customerId"`
+	CustomerName                   string      `json:"customerName"`
+	CustomerOrgType                bool        `json:"customerOrgType"`
+	Customers                      []struct {
+		ID           string `json:"id"`
+		Inn          string `json:"inn"`
+		Name         string `json:"name"`
+		AnyFieldNull bool   `json:"anyFieldNull"`
+	} `json:"customers"`
+	HasModificationClarification bool        `json:"hasModificationClarification"`
+	HasPlanGraph                 bool        `json:"hasPlanGraph"`
+	HasProtocol                  bool        `json:"hasProtocol"`
+	HasPublicDiscussion          bool        `json:"hasPublicDiscussion"`
+	Links                        interface{} `json:"links"`
+	LinksWithUrls                interface{} `json:"linksWithUrls"`
+	LotItems                     []struct {
+		Currency                       string      `json:"currency"`
+		CurrencyCbRate                 interface{} `json:"currencyCbRate"`
+		CurrencyContractCurrency       interface{} `json:"currencyContractCurrency"`
+		CurrencyContractCurrencySymbol string      `json:"currencyContractCurrencySymbol"`
+		CurrencyRate                   interface{} `json:"currencyRate"`
+		CurrencyRateDate               interface{} `json:"currencyRateDate"`
+		CurrencySymbol                 string      `json:"currencySymbol"`
+		FirstPrice                     float64     `json:"firstPrice"`
+		FirstPriceContractCurrency     interface{} `json:"firstPriceContractCurrency"`
+		ID                             int         `json:"id"`
+		IsSuspended                    bool        `json:"isSuspended"`
+		Name                           string      `json:"name"`
+		NominalRate                    interface{} `json:"nominalRate"`
+		NoticeID                       int         `json:"noticeId"`
+		Number                         int         `json:"number"`
+		PdiscNum                       string      `json:"pdiscNum"`
+		PdiscURL                       string      `json:"pdiscUrl"`
+		PurchaseNumber                 []string    `json:"purchaseNumber"`
+		Stage                          string      `json:"stage"`
+		StageNumber                    int         `json:"stageNumber"`
+		TitleName                      string      `json:"titleName"`
+		CurrencyNotEquals              bool        `json:"currencyNotEquals"`
+	} `json:"lotItems"`
+	LotItemsTotal         int         `json:"lotItemsTotal"`
+	Lots                  interface{} `json:"lots"`
+	MaxDateTimeZoneAbbrev interface{} `json:"maxDateTimeZoneAbbrev"`
+	MaxPublishDate        interface{} `json:"maxPublishDate"`
+	Method                struct {
+		Code      string      `json:"code"`
+		Name      string      `json:"name"`
+		ShortName interface{} `json:"shortName"`
+	} `json:"method"`
+	MethodType              string        `json:"methodType"`
+	Name                    string        `json:"name"`
+	NominalRate             interface{}   `json:"nominalRate"`
+	Number                  string        `json:"number"`
+	OkdpCode                interface{}   `json:"okdpCode"`
+	Organization            string        `json:"organization"`
+	OrganizationID          string        `json:"organizationId"`
+	OverhaulItemName        string        `json:"overhaulItemName"`
+	PdiscNum                string        `json:"pdiscNum"`
+	PlacerOrgRole           interface{}   `json:"placerOrgRole"`
+	Price                   int           `json:"price"`
+	PriceContractCurrency   interface{}   `json:"priceContractCurrency"`
+	PrintForm223ID          interface{}   `json:"printForm223Id"`
+	PrintFormID             string        `json:"printFormId"`
+	Provider                string        `json:"provider"`
+	PurchaseNumbers         []string      `json:"purchaseNumbers"`
+	RecordID                string        `json:"recordId"`
+	SignViewURL             string        `json:"signViewUrl"`
+	Stage                   string        `json:"stage"`
+	StagetStr               string        `json:"stagetStr"`
+	StartDate               interface{}   `json:"startDate"`
+	TillDate                int64         `json:"tillDate"`
+	TimeZoneAbbrev          string        `json:"timeZoneAbbrev"`
+	TitleName               string        `json:"titleName"`
+	TitleNumber             string        `json:"titleNumber"`
+	TitleOrganization       string        `json:"titleOrganization"`
+	UpdateDate              int64         `json:"updateDate"`
+	UpdateDateAsTimestamp   int64         `json:"updateDateAsTimestamp"`
+	UpdateDateMob           int64         `json:"updateDateMob"`
+	BlockedByUnschedInspect bool          `json:"blockedByUnschedInspect"`
+	Centralized             bool          `json:"centralized"`
+	MultyLot                bool          `json:"multyLot"`
+	CtrlInfosNotPass        bool          `json:"ctrlInfosNotPass"`
+	CtrlInfosPass           bool          `json:"ctrlInfosPass"`
+	PurchaseNumbersString   string        `json:"purchaseNumbersString"`
+	Cooperative             bool          `json:"cooperative"`
+	ManyPublishNotification bool          `json:"manyPublishNotification"`
+	ParsePdiscNumToList     []interface{} `json:"parsePdiscNumToList"`
+	LongPrice               bool          `json:"longPrice"`
+	MoreOneLot              bool          `json:"moreOneLot"`
+	CurrencyNotEquals       bool          `json:"currencyNotEquals"`
+}
