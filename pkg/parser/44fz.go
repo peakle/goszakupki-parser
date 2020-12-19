@@ -209,7 +209,7 @@ func fz44LotWorker(regNumber string, lotCh chan<- *provider.Purchase, proxy stri
 
 	{
 		purchase := &provider.Purchase{
-			Id:           dto.Dto.HeaderBlock.PurchaseNumber,
+			ID:           dto.Dto.HeaderBlock.PurchaseNumber,
 			Fz:           dto.Dto.HeaderBlock.PlacingWayFZ,
 			Customer:     dto.Dto.HeaderBlock.OrganizationPublishName,
 			CustomerLink: dto.Dto.HeaderBlock.OrganizationPublishLink,

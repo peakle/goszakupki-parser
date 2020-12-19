@@ -16,7 +16,7 @@ type EntryDto struct { //TODO add filters for api
 
 // Purchase - represent table columns
 type Purchase struct {
-	Id                          string
+	ID                          string
 	Fz                          string
 	Customer                    string
 	CustomerLink                string
@@ -41,7 +41,7 @@ type Purchase struct {
 
 // Provider - represent table columns
 type Provider struct {
-	Id               string
+	ID               string
 	Fz               string
 	PublishedAt      string
 	Nmck             string
@@ -322,10 +322,10 @@ type Dto44fz struct {
 						Number                string      `json:"number"`
 					} `json:"kvrCodeList"`
 					KvrCodeTotalAmountByYearMaps struct {
-						Num2020 int     `json:"2020"`
+						Num2020 float64 `json:"2020"`
 						Num2021 float64 `json:"2021"`
-						Num2022 int     `json:"2022"`
-						Num2023 int     `json:"2023"`
+						Num2022 float64 `json:"2022"`
+						Num2023 float64 `json:"2023"`
 					} `json:"kvrCodeTotalAmountByYearMaps"`
 					KvrCodeTotalAmountByYearMapsFormated struct {
 						Num2020 string `json:"2020"`

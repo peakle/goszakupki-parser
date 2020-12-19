@@ -57,7 +57,7 @@ func (m *SQLManager) InsertPurchase(lots []*provider.Purchase) {
 
 	for _, lot := range lots {
 		dataInsert.Add([]string{
-			lot.Id,
+			lot.ID,
 			lot.Fz,
 			lot.Customer,
 			lot.CustomerLink,
