@@ -13,8 +13,8 @@ EXPOSE $PORT
 
 RUN mkdir /app
 
-COPY ./loat /app
+COPY ./lot /app
 
 WORKDIR /app
 
-RUN chmod +x /app/loat
+RUN chmod +x /app/lot

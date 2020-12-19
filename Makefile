@@ -3,7 +3,7 @@ VERSION=$(shell cat VERSION)
 GOOS=linux
 GOARCH=amd64
 
-NAME=loat
+NAME=lot
 
 all: clean build
 

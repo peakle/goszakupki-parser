@@ -11,8 +11,8 @@ import (
 	"github.com/urfave/cli"
 )
 
-// ProcessLoat44 collect data about new loats for 44-FZ
-func ProcessLoat44(_ *cli.Context) error {
+// ProcessLot44 collect data about new lots for 44-FZ
+func ProcessLot44(_ *cli.Context) error {
 	fmt.Println("Start time: ", time.Now().Format("2006-01-02 15:04"))
 
 	var proxyChan = make(chan string, 3000)
@@ -27,11 +27,11 @@ func ProcessLoat44(_ *cli.Context) error {
 
 	go proxy.LoadProxy(proxyChan, doneChan)
 
-	loatChan := make(chan provider.Lot, 1000)
+	lotChan := make(chan provider.Lot, 1000)
 	upsertWg := &sync.WaitGroup{}
 
 	upsertWg.Add(1)
-	go upsertLoat(loatChan, doneChan, upsertWg)
+	go upsertLot(lotChan, doneChan, upsertWg)
 
 	//TODO implement logic
 
@@ -41,12 +41,12 @@ func ProcessLoat44(_ *cli.Context) error {
 	return nil
 }
 
-func upsertLoat(loatCh <-chan provider.Lot, doneCh <-chan struct{}, wg *sync.WaitGroup) {
+func upsertLot(lotCh <-chan provider.Lot, doneCh <-chan struct{}, wg *sync.WaitGroup) {
 	const maxUpsertLen = 10000
 
 	defer wg.Done()
 
-	var loat provider.Lot
+	var lot provider.Lot
 
 	ticker := time.NewTicker(time.Minute * 1)
 	defer ticker.Stop()
@@ -54,24 +54,24 @@ func upsertLoat(loatCh <-chan provider.Lot, doneCh <-chan struct{}, wg *sync.Wai
 	m := manager.InitManager()
 	defer m.Close()
 
-	loats := make([]provider.Lot, 0, 10000)
+	lots := make([]provider.Lot, 0, 10000)
 
 	for {
 		select {
 		case <-ticker.C:
-			if len(loats) > 0 {
-				m.UpsertLoats(loats)
+			if len(lots) > 0 {
+				m.UpsertLots(lots)
 
-				loats = loats[:0]
+				lots = lots[:0]
 			}
-		case loat = <-loatCh:
-			if len(loats) >= maxUpsertLen {
-				m.UpsertLoats(loats)
+		case lot = <-lotCh:
+			if len(lots) >= maxUpsertLen {
+				m.UpsertLots(lots)
 
-				loats = loats[:0]
+				lots = lots[:0]
 			}
 
-			loats = append(loats, loat)
+			lots = append(lots, lot)
 		case <-doneCh:
 			return
 		}

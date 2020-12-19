@@ -24,7 +24,7 @@ func StartServer(_ *cli.Context) {
 	requestHandler := func(ctx *fasthttp.RequestCtx) {
 		path := strings.ToLower(string(ctx.Path()))
 
-		if strings.HasPrefix(path, "/get/loat") {
+		if strings.HasPrefix(path, "/get/lot") {
 			handle(ctx)
 		} else if strings.HasPrefix(path, "/debug/pprof") {
 			pprofhandler.PprofHandler(ctx)
@@ -59,7 +59,7 @@ func handle(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	result, err = m.GetLoats(entryDto)
+	result, err = m.GetLots(entryDto)
 	if err != nil {
 		fmt.Fprint(ctx, "{\"error\": \""+err.Error()+"\"}")
 

@@ -7,7 +7,7 @@ gracePeriod: 30
 
 db:
     host: "localhost"
-    name: "Loat"
+    name: "Lots"
 
 image:
     registry:  # TODO docker hub image registry
@@ -15,7 +15,7 @@ image:
     tag: latest
 
 service:
-    name: loat
+    name: lot
     host: 127.0.0.1
     namespace: default
     type: ClusterIP

@@ -1,9 +1,9 @@
-CREATE DATABASE IF NOT EXISTS Loats;
-USE Loats;
+CREATE DATABASE IF NOT EXISTS Lots;
+USE Lots;
 
 -- TODO create tables
 
-create table Tenders
+create table Tender
 (
 	fz varchar(255) not null,
 	published_at datetime not null,

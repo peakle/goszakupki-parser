@@ -1,7 +1,7 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: loat-44-fz
+  name: lot-44-fz
 spec:
   schedule: "20 4 * * *"
   failedJobsHistoryLimit: 1
@@ -22,6 +22,6 @@ spec:
                 - name: MYSQL_HOST
                   value: "{{ .Values.db.host }}"
               args:
-                - /app/loat
+                - /app/lot
                 - 44-fz
           restartPolicy: Never

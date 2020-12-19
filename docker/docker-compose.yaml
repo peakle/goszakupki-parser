@@ -11,8 +11,8 @@ volumes:
             device: ":${PWD}"
 
 services:
-    ${PROJECT_NAME}_db:
-        image: mysql:8.0 # TODO change to image from docker hub
+    db:
+        image: mysql:8.0
         container_name: ${PROJECT_NAME}-db
         ports:
             - 3306:3306
@@ -27,16 +27,16 @@ services:
             MYSQL_PASSWORD: ${MYSQL_PASSWORD}
             MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-    ${PROJECT_NAME}_server:
+    server:
         container_name: ${PROJECT_NAME}-server
         build:
             context: ../.
             args:
                 MYSQL_USER: ${MYSQL_USER}
                 MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-        entrypoint: ["/app/loat", "server"]
+        entrypoint: ["/app/lot", "server"]
         depends_on:
-            - ${PROJECT_NAME}-db
+            - db
         ports:
             - 80:80
         environment:

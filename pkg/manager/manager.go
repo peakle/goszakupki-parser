@@ -23,13 +23,13 @@ type SQLManager struct {
 	conn *sql.DB
 }
 
-// UpsertLoats - upsert new loats
-func (m *SQLManager) UpsertLoats(loats []provider.Lot) {
+// UpsertLots - upsert new lots
+func (m *SQLManager) UpsertLots(lots []provider.Lot) {
 	//TODO
 }
 
-// GetLoats - get loats by filters
-func (m *SQLManager) GetLoats(entry provider.EntryDto) ([]provider.ResponseLot, error) {
+// GetLots - get lots by filters
+func (m *SQLManager) GetLots(entry provider.EntryDto) ([]provider.ResponseLot, error) {
 	//TODO
 
 	return nil, nil
