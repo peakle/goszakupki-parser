@@ -3,6 +3,7 @@ package manager
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -85,10 +86,130 @@ func (m *SQLManager) InsertPurchase(lots []*provider.Purchase) {
 }
 
 // GetLots - get lots by filters
-func (m *SQLManager) GetLots(entry provider.EntryDto) ([]map[string]string, error) {
-	//TODO
+func (m *SQLManager) GetLots(entry provider.EntryDto) ([]provider.Purchase, error) {
+	whereCond := parseParamsPurchase(entry)
 
-	return nil, nil
+	query := fmt.Sprintf(`
+		SELECT
+			id,
+			fz,
+			customer,
+			customer_link,
+			customer_inn,
+			customer_region,
+			bidding_region,
+			customer_activity_field,
+			bidding_volume,
+			bidding_count,
+			purchase_target,
+			registry_bidding_number,
+			contract_price,
+			participation_security_amount,
+			execution_security_amount,
+			published_at,
+			requisition_deadline_at,
+			contract_start_at,
+			contract_end_at,
+			playground,
+			purchase_link
+		FROM Purchase
+		WHERE 1
+			%s
+	`, whereCond)
+
+	rows, err := m.conn.Query(query)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return make([]provider.Purchase, 0, 0), nil
+		}
+
+		log.Printf("on query GetLots: %s, query: %s \n", err.Error(), query)
+
+		return make([]provider.Purchase, 0, 0), err
+	}
+
+	result := make([]provider.Purchase, 0, 10)
+	var row provider.Purchase
+
+	for rows.Next() {
+		err := rows.Scan(
+			&row.ID,
+			&row.Fz,
+			&row.Customer,
+			&row.CustomerLink,
+			&row.CustomerInn,
+			&row.CustomerRegion,
+			&row.BiddingRegion,
+			&row.CustomerActivityField,
+			&row.BiddingVolume,
+			&row.BiddingCount,
+			&row.PurchaseTarget,
+			&row.RegistryBiddingNumber,
+			&row.ContractPrice,
+			&row.ParticipationSecurityAmount,
+			&row.ExecutionSecurityAmount,
+			&row.PublishedAt,
+			&row.RequisitionDeadlineAt,
+			&row.ContractStartAt,
+			&row.ContractEndAt,
+			&row.Playground,
+			&row.PurchaseLink,
+		)
+
+		if err != nil {
+			log.Println("on GetLots: on scan: " + err.Error())
+			return make([]provider.Purchase, 0, 0), err
+		}
+
+		result = append(result, row)
+	}
+
+	return result, nil
+}
+
+//rebuild to queryBuilder
+// parseParamsPurchase - filters data
+func parseParamsPurchase(entry provider.EntryDto) string {
+	const tableName = "Purchase"
+	var cond string
+
+	if date, ok := entry["to_date"]; ok && date != "" {
+		cond += fmt.Sprintf(" AND %s.published_at <= '%s' ", tableName, date)
+	}
+
+	if date, ok := entry["from_date"]; ok && date != "" {
+		cond += fmt.Sprintf(" AND %s.published_at >= '%s' ", tableName, date)
+	}
+
+	if customer, ok := entry["customer"]; ok && customer != "" {
+		cond += fmt.Sprintf(" AND %s.customer_inn = '%s' ", tableName, customer)
+	}
+
+	if region, ok := entry["region"]; ok && region != "" {
+		cond += fmt.Sprintf(" AND %s.bidding_region = '%s' ", tableName, region)
+	}
+
+	if priceFrom, ok := entry["price_from"]; ok && priceFrom != "" {
+		cond += fmt.Sprintf(" AND %s.bidding_volume >= '%s' ", tableName, priceFrom)
+	}
+
+	if priceTo, ok := entry["price_to"]; ok && priceTo != "" {
+		cond += fmt.Sprintf(" AND %s.bidding_volume <= '%s' ", tableName, priceTo)
+	}
+
+	if grntShare, ok := entry["grnt_share_from"]; ok && grntShare != "" { // гарантия выполнения более чем (>=)
+		cond += fmt.Sprintf(" AND %s.execution_security_amount >= '%s' ", tableName, grntShare)
+	}
+
+	if grntShare, ok := entry["grnt_share_to"]; ok && grntShare != "" { // гарантия выполнения более чем (>=)
+		cond += fmt.Sprintf(" AND %s.execution_security_amount <= '%s' ", tableName, grntShare)
+	}
+
+	if cond == "" {
+		cond = " ORDER BY published_at DESC LIMIT 100 "
+	}
+
+	return cond
 }
 
 // InitManager - init connect to db

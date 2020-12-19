@@ -11,8 +11,8 @@ const UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:84.0) Gecko/
 // URIPatternFZ44Purchase - pattern for parse purchases
 const URIPatternFZ44Purchase = "https://zakupki.gov.ru/epz/order/notice/ea44/view/common-info.html?regNumber=%s&formatInJson=true"
 
-type EntryDto struct { //TODO add filters for api
-}
+// EntryDto - filter
+type EntryDto map[string]string
 
 // Purchase - represent table columns
 type Purchase struct {

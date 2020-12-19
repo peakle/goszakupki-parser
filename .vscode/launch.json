@@ -14,9 +14,9 @@
                 "MYSQL_DATABASE": "Lots"
             },
             "args": [
-                "44-fz",
-                "--from-date=18.12.2020",
-                "--to-date=19.12.2020"
+                "server",
+                // "--from-date=18.12.2020",
+                // "--to-date=19.12.2020"
             ]
         }
     ]

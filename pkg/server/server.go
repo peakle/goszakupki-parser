@@ -24,8 +24,8 @@ func StartServer(_ *cli.Context) {
 	requestHandler := func(ctx *fasthttp.RequestCtx) {
 		path := strings.ToLower(string(ctx.Path()))
 
-		if strings.HasPrefix(path, "/get/lot") {
-			handle(ctx)
+		if strings.HasPrefix(path, "/get/purchase") {
+			handlePurchase(ctx)
 		} else if strings.HasPrefix(path, "/debug/pprof") {
 			pprofhandler.PprofHandler(ctx)
 		} else {
@@ -45,10 +45,10 @@ func StartServer(_ *cli.Context) {
 	log.Fatal(server.ListenAndServe(":80"))
 }
 
-func handle(ctx *fasthttp.RequestCtx) {
+func handlePurchase(ctx *fasthttp.RequestCtx) {
 	var err error
 	var entryDto provider.EntryDto
-	var result []map[string]string
+	var result []provider.Purchase
 	var ans []byte
 
 	ctx.Response.Header.Set("Content-Type", "application/json")
