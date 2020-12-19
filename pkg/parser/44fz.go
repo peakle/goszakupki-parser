@@ -1,7 +1,9 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -9,6 +11,8 @@ import (
 	"github.com/peakle/goszakupki-parser/pkg/provider"
 	"github.com/peakle/goszakupki-parser/pkg/proxy"
 	"github.com/urfave/cli"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
 // ProcessLot44 collect data about new lots for 44-FZ
@@ -34,7 +38,7 @@ func ProcessLot44(_ *cli.Context) error {
 	go upsertLot(lotChan, doneChan, upsertWg)
 
 	concurCh := make(chan struct{}, 10) // increase for more parallelism
-	lot44Logic(lotChan, proxyChan, concurCh)
+	lot44Logic(lotChan, <-proxyChan, concurCh)
 
 	upsertWg.Wait()
 	fmt.Println("End time: ", time.Now().Format("2006-01-02 15:04"))
@@ -42,11 +46,37 @@ func ProcessLot44(_ *cli.Context) error {
 	return nil
 }
 
-func lot44Logic(lotCh chan<- provider.Lot, proxyCh <-chan string, concurCh chan struct{}) {
+func lot44Logic(lotCh chan<- provider.Lot, proxy string, concurCh chan struct{}) {
 	concurCh <- struct{}{}
 	defer func() {
 		<-concurCh
 	}()
+
+	var err error
+
+	client := fasthttp.Client{}
+	if proxy != "" {
+		client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxy, provider.DefaultTimeout)
+	}
+
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+
+	defer fasthttp.ReleaseRequest(req)
+	defer fasthttp.ReleaseResponse(resp)
+
+	err = client.DoTimeout(req, resp, provider.DefaultTimeout)
+	if err != nil {
+		log.Println("on lot44Logic: on DoTimeout: " + err.Error())
+		return
+	}
+
+	var dto *provider.Dto44fz
+	err = json.Unmarshal(resp.Body(), dto)
+	if dto == nil && err != nil {
+		log.Println("on lot44Logic: on unmarshal: " + err.Error())
+		return
+	}
 
 }
 
