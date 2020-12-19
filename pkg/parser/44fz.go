@@ -33,12 +33,21 @@ func ProcessLot44(_ *cli.Context) error {
 	upsertWg.Add(1)
 	go upsertLot(lotChan, doneChan, upsertWg)
 
-	//TODO implement logic
+	concurCh := make(chan struct{}, 10) // increase for more parallelism
+	lot44Logic(lotChan, proxyChan, concurCh)
 
 	upsertWg.Wait()
 	fmt.Println("End time: ", time.Now().Format("2006-01-02 15:04"))
 
 	return nil
+}
+
+func lot44Logic(lotCh chan<- provider.Lot, proxyCh <-chan string, concurCh chan struct{}) {
+	concurCh <- struct{}{}
+	defer func() {
+		<-concurCh
+	}()
+
 }
 
 func upsertLot(lotCh <-chan provider.Lot, doneCh <-chan struct{}, wg *sync.WaitGroup) {
@@ -73,6 +82,10 @@ func upsertLot(lotCh <-chan provider.Lot, doneCh <-chan struct{}, wg *sync.WaitG
 
 			lots = append(lots, lot)
 		case <-doneCh:
+			if len(lots) != 0 {
+				m.UpsertLots(lots)
+			}
+
 			return
 		}
 	}
