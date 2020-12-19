@@ -3,7 +3,7 @@ USE Lots;
 
 -- TODO create tables
 
-create table Tender
+create table PurchaseRequisition
 (
 	fz varchar(255) not null,
 	published_at datetime not null,
