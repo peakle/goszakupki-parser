@@ -687,7 +687,7 @@ type List struct {
 	OverhaulItemName        string        `json:"overhaulItemName"`
 	PdiscNum                string        `json:"pdiscNum"`
 	PlacerOrgRole           interface{}   `json:"placerOrgRole"`
-	Price                   int           `json:"price"`
+	Price                   float64       `json:"price"`
 	PriceContractCurrency   interface{}   `json:"priceContractCurrency"`
 	PrintForm223ID          interface{}   `json:"printForm223Id"`
 	PrintFormID             string        `json:"printFormId"`

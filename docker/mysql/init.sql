@@ -25,7 +25,7 @@ create table Provider -- Поставщики
 	playground varchar(255) null,
 	customer varchar(255) null,
 	win_count_year int default 0 null,
-	bad bool null
+	bad bool null,
 	activity_field  varchar(255) null,
 	phone_number varchar(255) null
 );

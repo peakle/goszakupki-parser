@@ -37,7 +37,7 @@ func ProcessLot44(c *cli.Context) error {
 	var doneChan = make(chan struct{}, 2)
 	var lotChan = make(chan *provider.Purchase, 1000)
 	var concurCh = make(chan struct{}, 10) // increase for more parallelism
-	var regNumberCh = make(chan int, 1000)
+	var regNumberCh = make(chan int, 10000)
 
 	var workerWg = &sync.WaitGroup{}
 	var upsertWg = &sync.WaitGroup{}
@@ -50,8 +50,8 @@ func ProcessLot44(c *cli.Context) error {
 	}()
 
 	go proxy.LoadProxy(proxyChan, doneChan)
-	go upsertLot(lotChan, doneChan, upsertWg)
-	go fz44RegNumberGenerator(fromDate, toDate, regNumberCh, proxyChan)
+	go insertLot(lotChan, doneChan, upsertWg)
+	fz44RegNumberGenerator(fromDate, toDate, regNumberCh, proxyChan)
 
 	for regNumber = range regNumberCh {
 		workerWg.Add(1)
@@ -116,7 +116,7 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- int, pro
 
 		err = json.Unmarshal(resp.Body(), &searchDto)
 		if err != nil {
-			log.Println("on fz44regNumberGenerator: on Unmarshal:" + err.Error())
+			log.Printf("on fz44regNumberGenerator: on Unmarshal: %s, uri: %s \n", err.Error(), uri)
 
 			fasthttp.ReleaseRequest(req)
 			fasthttp.ReleaseResponse(resp)
@@ -147,7 +147,7 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- int, pro
 		}
 
 		if pageNumber == maxPageCount {
-			price = l.Price
+			price = int(l.Price)
 			pageNumber = 1
 
 			fasthttp.ReleaseRequest(req)
@@ -169,6 +169,7 @@ func fz44LotWorker(regNumber int, lotCh chan<- *provider.Purchase, proxy string,
 
 	var err error
 	var dto provider.Dto44fz
+	var uri string
 
 	client := fasthttp.Client{
 		TLSConfig: &tls.Config{InsecureSkipVerify: true},
@@ -183,13 +184,19 @@ func fz44LotWorker(regNumber int, lotCh chan<- *provider.Purchase, proxy string,
 	defer fasthttp.ReleaseRequest(req)
 	defer fasthttp.ReleaseResponse(resp)
 
-	req.SetRequestURI(fmt.Sprintf(provider.URIPatternFZ44Purchase, regNumber))
+	uri = fmt.Sprintf(provider.URIPatternFZ44Purchase, regNumber)
+
+	req.SetRequestURI(uri)
 	req.Header.SetUserAgent(provider.UserAgent)
 	req.SetConnectionClose()
 
 	err = client.DoTimeout(req, resp, provider.DefaultTimeout)
 	if err != nil {
 		log.Println("on lot44Logic: on DoTimeout: " + err.Error())
+		return
+	}
+
+	if resp.StatusCode() != fasthttp.StatusOK {
 		return
 	}
 
@@ -238,7 +245,7 @@ func fz44LotWorker(regNumber int, lotCh chan<- *provider.Purchase, proxy string,
 	}
 }
 
-func upsertLot(lotCh <-chan *provider.Purchase, doneCh <-chan struct{}, wg *sync.WaitGroup) {
+func insertLot(lotCh <-chan *provider.Purchase, doneCh <-chan struct{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	const maxUpsertLen = 3000
@@ -257,13 +264,13 @@ func upsertLot(lotCh <-chan *provider.Purchase, doneCh <-chan struct{}, wg *sync
 		select {
 		case <-ticker.C:
 			if len(lots) > 0 {
-				m.UpsertPurchase(lots)
+				m.InsertPurchase(lots)
 
 				lots = lots[:0]
 			}
 		case lot = <-lotCh:
 			if len(lots) >= maxUpsertLen {
-				m.UpsertPurchase(lots)
+				m.InsertPurchase(lots)
 
 				lots = lots[:0]
 			}
@@ -271,7 +278,7 @@ func upsertLot(lotCh <-chan *provider.Purchase, doneCh <-chan struct{}, wg *sync
 			lots = append(lots, lot)
 		case <-doneCh:
 			if len(lots) != 0 {
-				m.UpsertPurchase(lots)
+				m.InsertPurchase(lots)
 			}
 
 			return

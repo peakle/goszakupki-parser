@@ -21,7 +21,17 @@ var (
 			Description: "parse lots for 44-fz",
 			Action:      parser.ProcessLot44,
 			Category:    "parser",
-			ArgsUsage:   "from-date, to-date parse period for search lots",
+			ArgsUsage:   "from-date, to-date parse period for search lots, in 'dd.mm.YYYY' format",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "from-date",
+					Usage: "parse lots from this date",
+				},
+				cli.StringFlag{
+					Name:  "to-date",
+					Usage: "parse lots to this date",
+				},
+			},
 		},
 		{
 			Name:        "lots-server",

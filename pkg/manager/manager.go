@@ -23,11 +23,11 @@ type SQLManager struct {
 	conn *sql.DB
 }
 
-// UpsertPurchase - upsert new lots/trends/purchase
-func (m *SQLManager) UpsertPurchase(lots []*provider.Purchase) {
+// InsertPurchase - insert new lots/trends/purchase
+func (m *SQLManager) InsertPurchase(lots []*provider.Purchase) {
 	const TableName = "Purchase"
 
-	dataUpsert := &sg.UpsertData{
+	dataInsert := &sg.InsertData{
 		TableName: TableName,
 		Fields: []string{
 			"id",
@@ -52,10 +52,11 @@ func (m *SQLManager) UpsertPurchase(lots []*provider.Purchase) {
 			"playground",
 			"purchase_link",
 		},
+		IsIgnore: true,
 	}
 
 	for _, lot := range lots {
-		dataUpsert.Add([]string{
+		dataInsert.Add([]string{
 			lot.Id,
 			lot.Fz,
 			lot.Customer,
@@ -80,7 +81,7 @@ func (m *SQLManager) UpsertPurchase(lots []*provider.Purchase) {
 		})
 	}
 
-	m.upsert(dataUpsert)
+	m.insert(dataInsert)
 }
 
 // GetLots - get lots by filters
