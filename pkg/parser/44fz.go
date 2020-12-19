@@ -222,10 +222,10 @@ func fz44LotWorker(regNumber string, lotCh chan<- *provider.Purchase, proxy stri
 			PurchaseTarget:        dto.Dto.HeaderBlock.PurchaseObjectName,
 			RegistryBiddingNumber: dto.Dto.HeaderBlock.PurchaseNumber,
 			ContractPrice:         fmt.Sprintf("%.3f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
-			PublishedAt:           time.Unix(dto.Dto.ProcedurePurchaseBlock.StartDateTime, 0).Format("02-01-2006"), // maybe error need treem 3 digits from rigth end
-			RequisitionDeadlineAt: time.Unix(dto.Dto.ProcedurePurchaseBlock.EndDateTime, 0).Format("02-01-2006"),   // maybe error need treem 3 digits from rigth end
-			ContractStartAt:       "",                                                                              //TODO
-			ContractEndAt:         "",                                                                              //TODO
+			PublishedAt:           time.Unix(dto.Dto.ProcedurePurchaseBlock.StartDateTime/1000, 0).Format("02-01-2006"),
+			RequisitionDeadlineAt: time.Unix(dto.Dto.ProcedurePurchaseBlock.EndDateTime/1000, 0).Format("02-01-2006"),
+			ContractStartAt:       "", //TODO
+			ContractEndAt:         "", //TODO
 			Playground:            dto.Dto.GeneralInformationOnPurchaseBlock.NameOfElectronicPlatform,
 			PurchaseLink:          dto.Dto.TabsBlock.CommonLink,
 		}
