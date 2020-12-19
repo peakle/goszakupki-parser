@@ -51,7 +51,7 @@ func ProcessLot44(c *cli.Context) error {
 
 	go proxy.LoadProxy(proxyChan, doneChan)
 	go insertLot(lotChan, doneChan, upsertWg)
-	fz44RegNumberGenerator(fromDate, toDate, regNumberCh, proxyChan)
+	go fz44RegNumberGenerator(fromDate, toDate, regNumberCh, proxyChan)
 
 	for regNumber = range regNumberCh {
 		workerWg.Add(1)
