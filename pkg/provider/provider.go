@@ -11,7 +11,3 @@ type EntryDto struct { //TODO add filters for api
 //TODO struct of db columns
 type Lot struct {
 }
-
-// TODO response for api
-type ResponseLot struct {
-}

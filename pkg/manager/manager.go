@@ -29,7 +29,7 @@ func (m *SQLManager) UpsertLots(lots []provider.Lot) {
 }
 
 // GetLots - get lots by filters
-func (m *SQLManager) GetLots(entry provider.EntryDto) ([]provider.ResponseLot, error) {
+func (m *SQLManager) GetLots(entry provider.EntryDto) ([]map[string]string, error) {
 	//TODO
 
 	return nil, nil
