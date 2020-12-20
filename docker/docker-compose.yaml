@@ -26,18 +26,18 @@ services:
             MYSQL_PASSWORD: ${MYSQL_PASSWORD}
             MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-    # server:
-    #     container_name: ${PROJECT_NAME}-server
-    #     build:
-    #         context: ../.
-    #         args:
-    #             MYSQL_USER: ${MYSQL_USER}
-    #             MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    #     entrypoint: ["/app/lot", "server"]
-    #     depends_on:
-    #         - db
-    #     ports:
-    #         - 80:80
-    #     environment:
-    #         MYSQL_DATABASE: ${MYSQL_DATABASE}
-    #         MYSQL_HOST: ${MYSQL_HOST}
+    server:
+        # image: peakle/goszakupki-parser
+        container_name: ${PROJECT_NAME}-server
+        build:
+            context: ../.
+        entrypoint: ["/app/lot", "server"]
+        depends_on:
+            - db
+        ports:
+            - 80:80
+        environment:
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+            MYSQL_HOST: ${MYSQL_HOST}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
