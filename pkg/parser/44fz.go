@@ -115,6 +115,13 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, 
 			continue
 		}
 
+		if resp.StatusCode() != 200 {
+			fasthttp.ReleaseRequest(req)
+			fasthttp.ReleaseResponse(resp)
+
+			continue
+		}
+
 		err = json.Unmarshal(resp.Body(), &searchDto)
 		if err != nil {
 			log.Printf("on fz44regNumberGenerator: on Unmarshal: %s, uri: %s \n", err.Error(), uri)
@@ -128,9 +135,6 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, 
 		}
 
 		if searchDto.Total == 0 {
-			fasthttp.ReleaseRequest(req)
-			fasthttp.ReleaseResponse(resp)
-
 			break
 		}
 
@@ -141,9 +145,6 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, 
 		}
 
 		if searchDto.Total < maxRecordsPerPage {
-			fasthttp.ReleaseRequest(req)
-			fasthttp.ReleaseResponse(resp)
-
 			break
 		}
 
