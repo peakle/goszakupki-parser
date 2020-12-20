@@ -24,7 +24,7 @@ func StartServer(_ *cli.Context) {
 	requestHandler := func(ctx *fasthttp.RequestCtx) {
 		path := strings.ToLower(string(ctx.Path()))
 
-		if strings.HasPrefix(path, "/get/purchase") {
+		if strings.HasPrefix(path, "/get/purchase") && string(ctx.Request.Header.Method()) == fasthttp.MethodGet {
 			handlePurchase(ctx)
 		} else if strings.HasPrefix(path, "/debug/pprof") {
 			pprofhandler.PprofHandler(ctx)
