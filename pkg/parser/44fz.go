@@ -53,7 +53,7 @@ func ProcessLot44(c *cli.Context) error {
 
 	for i := 0; i <= workerCount; i++ {
 		workerWg.Add(1)
-		go fz44LotWorker(regNumberCh, lotChan, <-proxyChan, workerWg)
+		go fz44LotWorker(regNumberCh, lotChan, proxyChan, workerWg)
 	}
 
 	workerWg.Wait()
@@ -162,12 +162,12 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, 
 	}
 }
 
-func fz44LotWorker(regNumberCh <-chan string, lotCh chan<- *provider.Purchase, proxy string, wg *sync.WaitGroup) {
+func fz44LotWorker(regNumberCh <-chan string, lotCh chan<- *provider.Purchase, proxyCh <-chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var err error
 	var dto provider.Dto44fz
-	var uri, regNumber string
+	var uri, regNumber, proxy string
 	var purchase *provider.Purchase
 	var req *fasthttp.Request
 	var resp *fasthttp.Response
@@ -180,6 +180,7 @@ func fz44LotWorker(regNumberCh <-chan string, lotCh chan<- *provider.Purchase, p
 		req = fasthttp.AcquireRequest()
 		resp = fasthttp.AcquireResponse()
 
+		proxy = <-proxyCh
 		if proxy != "" {
 			client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxy, provider.DefaultTimeout)
 			req.SetConnectionClose()
