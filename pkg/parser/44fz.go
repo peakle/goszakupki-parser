@@ -195,7 +195,7 @@ func fz44LotWorker(regNumberCh <-chan string, lotCh chan<- *provider.Purchase, p
 
 		err = client.DoTimeout(req, resp, provider.DefaultTimeout)
 		if err != nil {
-			log.Println("on lot44Logic: on DoTimeout: " + err.Error())
+			log.Println("on fz44LotWorker: on DoTimeout: " + err.Error())
 
 			fasthttp.ReleaseRequest(req)
 			fasthttp.ReleaseResponse(resp)
@@ -212,7 +212,7 @@ func fz44LotWorker(regNumberCh <-chan string, lotCh chan<- *provider.Purchase, p
 
 		err = json.Unmarshal(resp.Body(), &dto)
 		if err != nil {
-			log.Println("on lot44Logic: on unmarshal: " + err.Error())
+			log.Println("on fz44LotWorker: on unmarshal: " + err.Error())
 
 			if dto.Dto.HeaderBlock.PurchaseNumber == "" {
 				fasthttp.ReleaseRequest(req)
@@ -237,8 +237,8 @@ func fz44LotWorker(regNumberCh <-chan string, lotCh chan<- *provider.Purchase, p
 				PurchaseTarget:        dto.Dto.HeaderBlock.PurchaseObjectName,
 				RegistryBiddingNumber: dto.Dto.HeaderBlock.PurchaseNumber,
 				ContractPrice:         fmt.Sprintf("%.3f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
-				PublishedAt:           time.Unix(dto.Dto.ProcedurePurchaseBlock.StartDateTime/1000, 0).Format("02-01-2006"),
-				RequisitionDeadlineAt: time.Unix(dto.Dto.ProcedurePurchaseBlock.EndDateTime/1000, 0).Format("02-01-2006"),
+				PublishedAt:           time.Unix(dto.Dto.ProcedurePurchaseBlock.StartDateTime/1000, 0).Format("2006-01-02"),
+				RequisitionDeadlineAt: time.Unix(dto.Dto.ProcedurePurchaseBlock.EndDateTime/1000, 0).Format("2006-01-02"),
 				ContractStartAt:       "", //TODO
 				ContractEndAt:         "", //TODO
 				Playground:            dto.Dto.GeneralInformationOnPurchaseBlock.NameOfElectronicPlatform,
