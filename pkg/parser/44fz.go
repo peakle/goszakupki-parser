@@ -95,6 +95,7 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, 
 
 		if proxy != "" {
 			client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxy, 30*time.Second)
+			req.SetConnectionClose()
 		} else {
 			client.Dial = nil
 		}
@@ -103,7 +104,6 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, 
 
 		req.SetRequestURI(uri)
 		req.Header.SetUserAgent(provider.UserAgent)
-		req.SetConnectionClose()
 
 		err = client.DoTimeout(req, resp, provider.DefaultTimeout)
 		if err != nil {
@@ -115,7 +115,7 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, 
 			continue
 		}
 
-		if resp.StatusCode() != 200 {
+		if resp.StatusCode() != fasthttp.StatusOK {
 			fasthttp.ReleaseRequest(req)
 			fasthttp.ReleaseResponse(resp)
 
@@ -169,26 +169,28 @@ func fz44LotWorker(regNumberCh <-chan string, lotCh chan<- *provider.Purchase, p
 	var dto provider.Dto44fz
 	var uri, regNumber string
 	var purchase *provider.Purchase
+	var req *fasthttp.Request
+	var resp *fasthttp.Response
 
 	client := fasthttp.Client{
 		TLSConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
 	for regNumber = range regNumberCh {
+		req = fasthttp.AcquireRequest()
+		resp = fasthttp.AcquireResponse()
+
 		if proxy != "" {
 			client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxy, provider.DefaultTimeout)
+			req.SetConnectionClose()
 		} else {
 			client.Dial = nil
 		}
-
-		req := fasthttp.AcquireRequest()
-		resp := fasthttp.AcquireResponse()
 
 		uri = fmt.Sprintf(provider.URIPatternFZ44Purchase, regNumber)
 
 		req.SetRequestURI(uri)
 		req.Header.SetUserAgent(provider.UserAgent)
-		req.SetConnectionClose()
 
 		err = client.DoTimeout(req, resp, provider.DefaultTimeout)
 		if err != nil {
