@@ -31,17 +31,16 @@ func ProcessLot44(c *cli.Context) error {
 		toDate = time.Now().AddDate(0, 0, 1).Format("02-01-2006")
 	}
 
-	var regNumber string
+	workerCount := 10
 	var proxyChan = make(chan string, 3000)
 	var doneChan = make(chan struct{}, 2)
 	var lotChan = make(chan *provider.Purchase, 1000)
-	var concurCh = make(chan struct{}, 1) // increase for more parallelism
 	var regNumberCh = make(chan string, 10000)
 
 	var workerWg = &sync.WaitGroup{}
-	var upsertWg = &sync.WaitGroup{}
+	var insertWg = &sync.WaitGroup{}
 
-	upsertWg.Add(1)
+	insertWg.Add(1)
 
 	defer func() {
 		close(doneChan)
@@ -49,17 +48,19 @@ func ProcessLot44(c *cli.Context) error {
 	}()
 
 	go proxy.LoadProxy(proxyChan, doneChan)
-	go insertLot(lotChan, doneChan, upsertWg)
+	go insertLot(lotChan, doneChan, insertWg)
 	go fz44RegNumberGenerator(fromDate, toDate, regNumberCh, proxyChan)
 
-	for regNumber = range regNumberCh {
+	for i := 0; i <= workerCount; i++ {
 		workerWg.Add(1)
-		go fz44LotWorker(regNumber, lotChan, <-proxyChan, concurCh, workerWg)
+		go fz44LotWorker(regNumberCh, lotChan, <-proxyChan, workerWg)
 	}
+
+	workerWg.Wait()
 
 	doneChan <- struct{}{} // for upserts
 	doneChan <- struct{}{} // for proxy
-	upsertWg.Wait()
+	insertWg.Wait()
 
 	fmt.Println("End time: ", time.Now().Format("2006-01-02 15:04"))
 
@@ -67,6 +68,8 @@ func ProcessLot44(c *cli.Context) error {
 }
 
 func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, proxyCh <-chan string) {
+	defer close(regNumberCh)
+
 	//pageNumber, from, to, price (from)
 	const SearchURIPattern = "https://zakupki.gov.ru/epz/order/extendedsearch/results.html?morphology=on&sortDirection=true&recordsPerPage=_50&showLotsInfoHidden=false&sortBy=PRICE&fz44=on&af=on&ca=on&currencyIdGeneral=-1&formatInJson=true&pageNumber=%d&publishDateFrom=%s&publishDateTo=%s&priceFromGeneral=%d"
 	const maxRecordsPerPage = 50
@@ -158,91 +161,100 @@ func fz44RegNumberGenerator(fromDate, toDate string, regNumberCh chan<- string, 
 	}
 }
 
-func fz44LotWorker(regNumber string, lotCh chan<- *provider.Purchase, proxy string, concurCh chan struct{}, wg *sync.WaitGroup) {
-	concurCh <- struct{}{}
-	defer func() {
-		<-concurCh
-		wg.Done()
-	}()
+func fz44LotWorker(regNumberCh <-chan string, lotCh chan<- *provider.Purchase, proxy string, wg *sync.WaitGroup) {
+	defer wg.Done()
 
 	var err error
 	var dto provider.Dto44fz
-	var uri string
+	var uri, regNumber string
+	var purchase *provider.Purchase
 
 	client := fasthttp.Client{
 		TLSConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	if proxy != "" {
-		client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxy, provider.DefaultTimeout)
-	}
 
-	req := fasthttp.AcquireRequest()
-	resp := fasthttp.AcquireResponse()
-
-	defer fasthttp.ReleaseRequest(req)
-	defer fasthttp.ReleaseResponse(resp)
-
-	uri = fmt.Sprintf(provider.URIPatternFZ44Purchase, regNumber)
-
-	req.SetRequestURI(uri)
-	req.Header.SetUserAgent(provider.UserAgent)
-	req.SetConnectionClose()
-
-	err = client.DoTimeout(req, resp, provider.DefaultTimeout)
-	if err != nil {
-		log.Println("on lot44Logic: on DoTimeout: " + err.Error())
-		return
-	}
-
-	if resp.StatusCode() != fasthttp.StatusOK {
-		return
-	}
-
-	err = json.Unmarshal(resp.Body(), &dto)
-	if err != nil {
-		log.Println("on lot44Logic: on unmarshal: " + err.Error())
-
-		if dto.Dto.HeaderBlock.PurchaseNumber == "" {
-			return
-		}
-	}
-
-	{
-		purchase := &provider.Purchase{
-			ID:           dto.Dto.HeaderBlock.PurchaseNumber,
-			Fz:           dto.Dto.HeaderBlock.PlacingWayFZ,
-			Customer:     dto.Dto.HeaderBlock.OrganizationPublishName,
-			CustomerLink: dto.Dto.HeaderBlock.OrganizationPublishLink,
-			// CustomerInn: dto.Dto.Inn,
-			CustomerRegion: dto.Dto.OrganizationDefinitionSupplierBlock.Location,
-			// BiddingRegion: ,
-			// CustomerActivityField: dto.Dto.HeaderBlock.PurchaseObjectName,
-			BiddingVolume: fmt.Sprintf("%.3f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
-			// BiddingCount: ,
-			PurchaseTarget:        dto.Dto.HeaderBlock.PurchaseObjectName,
-			RegistryBiddingNumber: dto.Dto.HeaderBlock.PurchaseNumber,
-			ContractPrice:         fmt.Sprintf("%.3f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
-			PublishedAt:           time.Unix(dto.Dto.ProcedurePurchaseBlock.StartDateTime/1000, 0).Format("02-01-2006"),
-			RequisitionDeadlineAt: time.Unix(dto.Dto.ProcedurePurchaseBlock.EndDateTime/1000, 0).Format("02-01-2006"),
-			ContractStartAt:       "", //TODO
-			ContractEndAt:         "", //TODO
-			Playground:            dto.Dto.GeneralInformationOnPurchaseBlock.NameOfElectronicPlatform,
-			PurchaseLink:          dto.Dto.TabsBlock.CommonLink,
+	for regNumber = range regNumberCh {
+		if proxy != "" {
+			client.Dial = fasthttpproxy.FasthttpHTTPDialerTimeout(proxy, provider.DefaultTimeout)
+		} else {
+			client.Dial = nil
 		}
 
-		if len(dto.Dto.CustomerRequirementsBlock) > 0 {
-			var participationSecurityAmount string
-			if dto.Dto.CustomerRequirementsBlock[0].EnsuringPurchase.OfferGrnt {
-				participationSecurityAmount = fmt.Sprintf("%.3f", dto.Dto.CustomerRequirementsBlock[0].EnsuringPurchase.AmountEnforcement)
-			}
-			purchase.ParticipationSecurityAmount = participationSecurityAmount
+		req := fasthttp.AcquireRequest()
+		resp := fasthttp.AcquireResponse()
 
-			if dto.Dto.CustomerRequirementsBlock[0].EnsuringPerformanceContract.OfferGrnt {
-				purchase.ExecutionSecurityAmount = fmt.Sprintf("%.3f", dto.Dto.CustomerRequirementsBlock[0].EnsuringPerformanceContract.ContractGrntShare)
+		uri = fmt.Sprintf(provider.URIPatternFZ44Purchase, regNumber)
+
+		req.SetRequestURI(uri)
+		req.Header.SetUserAgent(provider.UserAgent)
+		req.SetConnectionClose()
+
+		err = client.DoTimeout(req, resp, provider.DefaultTimeout)
+		if err != nil {
+			log.Println("on lot44Logic: on DoTimeout: " + err.Error())
+
+			fasthttp.ReleaseRequest(req)
+			fasthttp.ReleaseResponse(resp)
+
+			continue
+		}
+
+		if resp.StatusCode() != fasthttp.StatusOK {
+			fasthttp.ReleaseRequest(req)
+			fasthttp.ReleaseResponse(resp)
+
+			continue
+		}
+
+		err = json.Unmarshal(resp.Body(), &dto)
+		if err != nil {
+			log.Println("on lot44Logic: on unmarshal: " + err.Error())
+
+			if dto.Dto.HeaderBlock.PurchaseNumber == "" {
+				fasthttp.ReleaseRequest(req)
+				fasthttp.ReleaseResponse(resp)
+
+				continue
 			}
 		}
 
-		lotCh <- purchase
+		{
+			purchase = &provider.Purchase{
+				ID:           dto.Dto.HeaderBlock.PurchaseNumber,
+				Fz:           dto.Dto.HeaderBlock.PlacingWayFZ,
+				Customer:     dto.Dto.HeaderBlock.OrganizationPublishName,
+				CustomerLink: dto.Dto.HeaderBlock.OrganizationPublishLink,
+				// CustomerInn: dto.Dto.Inn, TODO
+				CustomerRegion: dto.Dto.OrganizationDefinitionSupplierBlock.Location,
+				// BiddingRegion: ,
+				// CustomerActivityField: dto.Dto.HeaderBlock.PurchaseObjectName,
+				BiddingVolume: fmt.Sprintf("%.3f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
+				// BiddingCount: ,
+				PurchaseTarget:        dto.Dto.HeaderBlock.PurchaseObjectName,
+				RegistryBiddingNumber: dto.Dto.HeaderBlock.PurchaseNumber,
+				ContractPrice:         fmt.Sprintf("%.3f", dto.Dto.InitialContractPriceBlock.InitialContractPrice),
+				PublishedAt:           time.Unix(dto.Dto.ProcedurePurchaseBlock.StartDateTime/1000, 0).Format("02-01-2006"),
+				RequisitionDeadlineAt: time.Unix(dto.Dto.ProcedurePurchaseBlock.EndDateTime/1000, 0).Format("02-01-2006"),
+				ContractStartAt:       "", //TODO
+				ContractEndAt:         "", //TODO
+				Playground:            dto.Dto.GeneralInformationOnPurchaseBlock.NameOfElectronicPlatform,
+				PurchaseLink:          dto.Dto.TabsBlock.CommonLink,
+			}
+
+			if len(dto.Dto.CustomerRequirementsBlock) > 0 {
+				var participationSecurityAmount string
+				if dto.Dto.CustomerRequirementsBlock[0].EnsuringPurchase.OfferGrnt {
+					participationSecurityAmount = fmt.Sprintf("%.3f", dto.Dto.CustomerRequirementsBlock[0].EnsuringPurchase.AmountEnforcement)
+				}
+				purchase.ParticipationSecurityAmount = participationSecurityAmount
+
+				if dto.Dto.CustomerRequirementsBlock[0].EnsuringPerformanceContract.OfferGrnt {
+					purchase.ExecutionSecurityAmount = fmt.Sprintf("%.3f", dto.Dto.CustomerRequirementsBlock[0].EnsuringPerformanceContract.ContractGrntShare)
+				}
+			}
+
+			lotCh <- purchase
+		}
 	}
 }
 

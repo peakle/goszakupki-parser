@@ -202,11 +202,11 @@ func parseParamsPurchase(entry provider.EntryDto) string {
 		cond += fmt.Sprintf(" AND %s.bidding_volume <= '%s' ", tableName, priceTo)
 	}
 
-	if grntShare, ok := entry["grnt_share_from"]; ok && grntShare != "" { // гарантия выполнения более чем (>=)
+	if grntShare, ok := entry["grnt_share_from"]; ok && grntShare != "" { // гарантия выполнения контракта более чем (>=)
 		cond += fmt.Sprintf(" AND %s.execution_security_amount >= '%s' ", tableName, grntShare)
 	}
 
-	if grntShare, ok := entry["grnt_share_to"]; ok && grntShare != "" { // гарантия выполнения более чем (>=)
+	if grntShare, ok := entry["grnt_share_to"]; ok && grntShare != "" { // гарантия выполнения контракта менее чем (>=)
 		cond += fmt.Sprintf(" AND %s.execution_security_amount <= '%s' ", tableName, grntShare)
 	}
 
