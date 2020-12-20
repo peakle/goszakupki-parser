@@ -22,7 +22,7 @@ spec:
       imagePullSecrets:
         - name: regcred
       containers:
-        - name: "{{ .Chart.Name }}"
+        - name: "{{ .Values.service.name }}"
           image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
           imagePullPolicy: Always
           env:
