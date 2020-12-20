@@ -14,7 +14,7 @@ spec:
             - name: regcred
           containers:
             - name: "{{ .Values.service.name}}-44-fz"
-              image: "{{ .Values.image.registry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+              image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
               imagePullPolicy: Always
               env:
                 - name: MYSQL_DATABASE

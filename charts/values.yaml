@@ -8,17 +8,16 @@ gracePeriod: 30
 db:
     host: "localhost"
     name: "Lots"
+    user: root
+    password: root
 
 image:
-    registry:  # TODO docker hub image registry
-    name: 
+    name: peakle/goszakupki-parser
     tag: latest
 
 service:
     name: lot
     host: 127.0.0.1
-    user: root
-    password: root
     namespace: default
     type: ClusterIP
     externalPort: "80"
