@@ -1,5 +1,5 @@
 COMMIT_ID=$(shell git rev-parse --short HEAD)
-VERSION=$(shell cat VERSION)
+VERSION=$(shell git describe --tags)
 GOOS=linux
 GOARCH=amd64
 
