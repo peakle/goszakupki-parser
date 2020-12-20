@@ -17,7 +17,7 @@ image:
 
 service:
     name: lot
-    host: 127.0.0.1
+    host: goszakupki-parser.net
     namespace: default
     type: ClusterIP
     externalPort: "80"

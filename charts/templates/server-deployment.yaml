@@ -38,5 +38,5 @@ spec:
             - /app/lot
             - server
           ports:
-            - containerPort: "{{ .Values.service.externalPort }}"
+            - containerPort: {{ .Values.service.externalPort }}
       restartPolicy: Always
