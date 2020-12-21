@@ -31,7 +31,7 @@ func ProcessLot44(c *cli.Context) error {
 		toDate = time.Now().AddDate(0, 0, 1).Format("02-01-2006")
 	}
 
-	workerCount := 10
+	workerCount := 20
 	var proxyChan = make(chan string, 3000)
 	var doneChan = make(chan struct{}, 2)
 	var lotChan = make(chan *provider.Purchase, 1000)
@@ -269,7 +269,7 @@ func insertLot(lotCh <-chan *provider.Purchase, doneCh <-chan struct{}, wg *sync
 
 	var lot *provider.Purchase
 
-	ticker := time.NewTicker(time.Minute * 1)
+	ticker := time.NewTicker(time.Second * 10)
 	defer ticker.Stop()
 
 	m := manager.InitManager()
