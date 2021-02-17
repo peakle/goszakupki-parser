@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/peakle/goszakupki-parser/pkg/parser"
-	"github.com/peakle/goszakupki-parser/pkg/server"
+	"github.com/peakle/goszakupki-parser/internal/parser"
+	"github.com/peakle/goszakupki-parser/internal/server"
 	"github.com/urfave/cli"
 )
 

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/peakle/goszakupki-parser/pkg/manager"
-	"github.com/peakle/goszakupki-parser/pkg/provider"
+	"github.com/peakle/goszakupki-parser/internal/manager"
+	"github.com/peakle/goszakupki-parser/internal/provider"
 	"github.com/urfave/cli"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/pprofhandler"

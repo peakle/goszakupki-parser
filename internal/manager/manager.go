@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/peakle/goszakupki-parser/pkg/provider"
+	"github.com/peakle/goszakupki-parser/internal/provider"
 	sg "github.com/wakeapp/go-sql-generator"
 )
 
